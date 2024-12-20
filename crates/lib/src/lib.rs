@@ -16,6 +16,6 @@ pub mod lib {
 pub mod prelude {
     pub use {
         super::{lib::*, macros::*, program},
-        program::{msg, program_error::ProgramError},
+        program::{msg, program_error::ProgramError, pubkey::*},
     };
 }

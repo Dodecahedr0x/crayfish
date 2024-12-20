@@ -34,7 +34,7 @@ impl Bumps {
 
             let computed_bump = (
                 (quote! {
-                    let (#pk, #bump) = crayfish_program::pubkey::find_program_address(&[#seeds], &crate::ID);
+                    let (#pk, #bump) = typhoon::program::pubkey::find_program_address(&[#seeds], &crate::ID);
                 }, 
                 quote ! {
                     if #name.key() != &#pk {
@@ -47,7 +47,7 @@ impl Bumps {
             let provided_bump = (
                 (quote! {},
                 quote! {
-                    let #pk = crayfish_program::pubkey::create_program_address(&[#seeds, &[#value]], &crate::ID)?;
+                    let #pk = typhoon::program::pubkey::create_program_address(&[#seeds, &[#value]], &crate::ID)?;
                     if #name.key() != &#pk {
                         return Err(ProgramError::InvalidSeeds);
                     }

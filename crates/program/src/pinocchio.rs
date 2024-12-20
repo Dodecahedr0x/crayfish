@@ -7,6 +7,7 @@ pub use {
 
 pub type RawAccountInfo = AccountInfo;
 pub type SignerSeeds<'a, 'b> = instruction::Signer<'a, 'b>;
+pub type SignerSeed<'a> = instruction::Seed<'a>;
 
 pub use pinocchio_pubkey::declare_id;
 
