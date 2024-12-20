@@ -1,6 +1,7 @@
 use {
     accounts::{Account, Accounts},
     arguments::Arguments,
+    bumps::Bumps,
     lifetime::InjectLifetime,
     proc_macro::TokenStream,
     quote::{quote, ToTokens},
@@ -12,6 +13,7 @@ use {
 
 mod accounts;
 mod arguments;
+mod bumps;
 mod constraints;
 mod lifetime;
 
@@ -37,6 +39,7 @@ struct Context {
     generics: Generics,
     item: Item,
     accounts: Accounts,
+    bumps: Bumps,
     args: Arguments,
 }
 impl Parse for Context {
@@ -64,11 +67,14 @@ impl Parse for Context {
                     .map(Account::try_from)
                     .collect::<Result<Vec<Account>, syn::Error>>()?;
 
+                let bumps = Bumps::try_from(&accounts)?;
+
                 Ok(Context {
                     ident: item_struct.ident.to_owned(),
                     generics: item_struct.generics.to_owned(),
                     item: Item::Struct(item_struct),
                     accounts: Accounts(accounts),
+                    bumps,
                     args,
                 })
             }
@@ -89,7 +95,9 @@ impl ToTokens for Context {
 
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
         let new_lifetime: Lifetime = parse_quote!('info);
-        let (name_list, accounts_assign, accounts_verifications) = self.accounts.split_for_impl();
+        let (name_list, accounts_assign) = self.accounts.split_for_impl();
+        let (bumps_struct_name, bumps_struct, bumps_checks, bumps_assign) =
+            self.bumps.split_for_impl(name);
         let (args_struct_name, args_struct, args_assign) = self.args.split_for_impl(name);
 
         if let Item::Struct(account_struct) = account_struct {
@@ -97,6 +105,9 @@ impl ToTokens for Context {
             if let Fields::Named(fields) = &mut account_struct.fields {
                 fields.named.push(parse_quote! {
                     pub args: Args<#new_lifetime, #args_struct_name>
+                });
+                fields.named.push(parse_quote! {
+                    pub bumps: #bumps_struct_name
                 });
             }
 
@@ -111,6 +122,8 @@ impl ToTokens for Context {
         }
 
         let expanded = quote! {
+            #bumps_struct
+
             #args_struct
 
             #account_struct
@@ -125,12 +138,14 @@ impl ToTokens for Context {
                     };
 
                     #args_assign
+                    #bumps_assign
                     #accounts_assign
-                    #accounts_verifications
+
+                    #bumps_checks
 
                     *accounts = rem;
 
-                    Ok(#name { #name_list, args })
+                    Ok(#name { #name_list, bumps, args })
                 }
             }
         };

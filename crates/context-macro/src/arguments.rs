@@ -51,11 +51,11 @@ pub enum Arguments {
 }
 
 impl Arguments {
-    pub fn split_for_impl(&self, base_name: &Ident) -> (TokenStream, TokenStream, TokenStream) {
+    pub fn split_for_impl(&self, context_name: &Ident) -> (TokenStream, TokenStream, TokenStream) {
         let (struct_name, generated_struct) = match self {
             Arguments::Struct(Argument::Struct { name }) => (quote! {#name}, quote!()),
             Arguments::Values(list) => {
-                let struct_name = format_ident!("{}Args", base_name);
+                let struct_name = format_ident!("{}Args", context_name);
 
                 let fields = list.iter().map(|arg| {
                     if let Argument::Value { name, ty } = arg {
